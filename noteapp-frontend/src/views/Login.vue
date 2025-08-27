@@ -89,12 +89,13 @@ export default {
           // 验证token是否已保存
           const token = localStorage.getItem('auth_token');
           if (token) {
-            // 显示登录成功消息，不跳转页面
+            // 登录成功，跳转到笔记列表页面
             this.successMessage = result.msg || result.message || '登录成功！';
             this.errorMessage = ''; // 清除错误信息
-            // 清空表单
-            this.username = '';
-            this.password = '';
+            // 延迟跳转，让用户看到成功消息
+            setTimeout(() => {
+              this.$router.push('/notes');
+            }, 1000);
           } else {
             console.error('Token保存失败');
             this.errorMessage = '登录成功但认证信息保存失败';
@@ -314,4 +315,4 @@ body {
     margin-bottom: 25px;
   }
 }
-</style> 
+</style>

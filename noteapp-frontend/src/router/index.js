@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Login from '../views/Login.vue'
+import NoteList from '../views/NoteList.vue'
 
 
 Vue.use(VueRouter)
@@ -11,6 +12,12 @@ const routes = [
     name: 'Login',
     component: Login
   },
+  {
+    path: '/notes',
+    name: 'NoteList',
+    component: NoteList,
+    meta: { requiresAuth: true }
+  }
 ]
 
 const router = new VueRouter({
@@ -34,4 +41,4 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-export default router 
+export default router

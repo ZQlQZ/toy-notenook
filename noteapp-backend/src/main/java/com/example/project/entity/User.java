@@ -1,4 +1,5 @@
 package com.example.project.entity;
+
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -12,3 +13,4 @@ public class User {
   private String username;
   private String password;
 }
+

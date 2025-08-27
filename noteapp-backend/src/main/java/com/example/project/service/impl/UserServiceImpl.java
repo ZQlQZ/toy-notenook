@@ -6,15 +6,17 @@ import com.example.project.dto.vo.UserLoginVO;
 import com.example.project.entity.User;
 import com.example.project.mapper.UserMapper;
 import com.example.project.service.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.example.project.dto.form.UserLoginForm;
 
 
 @Service
-@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
+    
+    public UserServiceImpl(UserMapper userMapper) {
+        this.userMapper = userMapper;
+    }
 
     @Override
     public UserLoginVO login(UserLoginForm form) {

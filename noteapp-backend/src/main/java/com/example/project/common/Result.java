@@ -9,6 +9,7 @@ import java.io.Serializable;
  */
 @Data
 public class Result<T> implements Serializable {
+
     /**
      * 状态码
      */
@@ -46,9 +47,9 @@ public class Result<T> implements Serializable {
      */
     public static <T> Result<T> ok(T data) {
         Result<T> result = new Result<>();
-        result.setCode(SUCCESS_CODE);
-        result.setMsg(SUCCESS_MSG);
-        result.setData(data);
+        result.code = SUCCESS_CODE;
+        result.msg = SUCCESS_MSG;
+        result.data = data;
         return result;
     }
 
@@ -57,8 +58,8 @@ public class Result<T> implements Serializable {
      */
     public static <T> Result<T> fail(int code, String msg) {
         Result<T> result = new Result<>();
-        result.setCode(code);
-        result.setMsg(msg);
+        result.code = code;
+        result.msg = msg;
         return result;
     }
 
