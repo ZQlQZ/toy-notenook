@@ -84,7 +84,6 @@ toy-notenook/
 1. 表忘记先安装mysql
 
 2. 创建MySQL数据库：
-   安装sql后运行：
 
    ```sql
    CREATE DATABASE demo DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
