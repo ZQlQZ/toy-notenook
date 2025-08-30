@@ -12,6 +12,7 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+*.jar
 
 # 忽略 .env 文件
 .env
