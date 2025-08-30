@@ -12,7 +12,10 @@ class AuthService {
   // 发送HTTP请求的通用方法
   async request(endpoint, options = {}) {
     try {
-      const response = await http.post(endpoint, options.body || {}, {
+      // 确保endpoint以/api开头，如果没有则添加
+      const fullEndpoint = endpoint.startsWith('/api') ? endpoint : `${this.baseUrl}${endpoint}`;
+      console.log('认证请求URL:', fullEndpoint);
+      const response = await http.post(fullEndpoint, options.body || {}, {
         timeout: this.timeout,
         ...options
       });

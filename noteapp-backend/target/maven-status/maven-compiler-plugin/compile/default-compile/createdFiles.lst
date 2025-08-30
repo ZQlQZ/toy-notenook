@@ -1,7 +1,6 @@
 com/example/project/entity/Note.class
 com/example/project/service/NoteService.class
 com/example/project/service/impl/NoteServiceImpl.class
-com/example/project/config/SwaggerConfig.class
 com/example/project/controller/UserController.class
 com/example/project/dto/form/UserCreateForm.class
 com/example/project/mapper/NoteMapper.class
@@ -17,6 +16,7 @@ com/example/project/mapper/UserMapper.class
 com/example/project/controller/AiController.class
 com/example/project/common/ex/BusinessException.class
 com/example/project/service/UserService.class
+com/example/project/common/ex/GlobalExceptionHandler.class
 com/example/project/controller/NoteController.class
 com/example/project/common/Result.class
 com/example/project/ProjectApplication.class

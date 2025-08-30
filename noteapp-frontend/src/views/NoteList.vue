@@ -42,9 +42,13 @@
         <div class="note-content">
           <p>{{ note.content }}</p>
         </div>
+        <div class="note-ai-summary" v-if="note.aiSummary">
+          <strong>AI总结:</strong> {{ note.aiSummary }}
+        </div>
         <div class="note-footer">
           <span>创建时间: {{ formatTime(note.createTime) }}</span>
           <span>更新时间: {{ formatTime(note.updateTime) }}</span>
+          <button @click="summarizeNote(note)" class="ai-summary-btn">AI总结</button>
         </div>
       </div>
     </div>
@@ -74,7 +78,7 @@
 </template>
 
 <script>
-import { authService, authUtils } from '@/services';
+import { authService, authUtils, aiService } from '@/services';
 
 export default {
   name: 'NoteList',
@@ -244,6 +248,76 @@ export default {
         // 即使登出失败，也清除本地数据并重定向到登录页面
         authService.clearAuthData();
         this.$router.push('/');
+      }
+    },
+    
+    // AI总结笔记
+    async summarizeNote(note) {
+      try {
+        // 调用AI服务进行笔记总结
+        const result = await aiService.summarizeNote(note.content);
+        
+        // 检查后端返回的状态码，200表示成功
+        if (result.code === 200) {
+          // 正确提取AI总结内容
+          let summaryContent = '';
+          if (typeof result.data === 'string') {
+            // 如果data是字符串，直接使用
+            summaryContent = result.data;
+          } else if (result.data && typeof result.data === 'object') {
+            // 如果data是对象，尝试提取内容
+            if (result.data.analysis) {
+              // analyzeNote返回的结构
+              summaryContent = result.data.analysis;
+            } else if (result.data.data) {
+              // 可能的嵌套结构
+              summaryContent = result.data.data;
+            } else {
+              // 尝试将对象转换为JSON字符串
+              summaryContent = JSON.stringify(result.data);
+            }
+          } else {
+            // 其他情况，转换为字符串
+            summaryContent = String(result.data);
+          }
+          
+          // 更新笔记对象，添加AI总结
+          note.aiSummary = summaryContent;
+          
+          // 询问用户是否将总结写入笔记内容
+          if (confirm('AI总结完成：' + summaryContent + '\n\n是否将总结写入笔记内容？')) {
+            // 更新笔记内容，将AI总结添加到原文末尾
+            note.content = note.content + '\n\n---AI总结---\n' + summaryContent;
+            
+            // 调用后端API更新笔记
+            const updateResult = await fetch('/api/notes', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(note)
+            });
+            
+            const updateResponse = await updateResult.json();
+            
+            if (updateResponse.code === 200) {
+              alert('AI总结已写入笔记内容');
+              // 重新加载笔记列表以显示更新后的内容
+              await this.loadNotes();
+            } else {
+              console.error('更新笔记失败:', updateResponse.msg);
+              alert('更新笔记失败: ' + (updateResponse.msg || '未知错误'));
+            }
+          } else {
+            alert('AI总结完成');
+          }
+        } else {
+          console.error('AI总结失败:', result.msg);
+          alert('AI总结失败: ' + (result.msg || '未知错误'));
+        }
+      } catch (error) {
+        console.error('AI总结失败:', error);
+        alert('AI总结失败: ' + (error.message || '网络请求失败'));
       }
     },
     
@@ -436,8 +510,32 @@ export default {
 .note-footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 12px;
   color: #999;
+}
+
+.note-ai-summary {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #f0f9ff;
+  border: 1px solid #b3d8ff;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.ai-summary-btn {
+  padding: 4px 8px;
+  background: #67c23a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ai-summary-btn:hover {
+  background: #85ce61;
 }
 
 .empty-state {

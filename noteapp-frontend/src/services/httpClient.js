@@ -4,7 +4,7 @@ import { authUtils } from './utils';
 
 // 创建axios实例
 const httpClient = axios.create({
-  baseURL: config.api.baseUrl,
+  baseURL: '',
   timeout: config.api.timeout,
   headers: {
     'Content-Type': 'application/json'
@@ -94,4 +94,4 @@ export const http = {
 };
 
 // 导出axios实例（如果需要直接使用）
-export default httpClient; 
+export default httpClient;

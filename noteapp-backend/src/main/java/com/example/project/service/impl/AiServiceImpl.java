@@ -1,71 +1,243 @@
 package com.example.project.service.impl;
 
 import com.example.project.service.AiService;
+import com.volcengine.ark.runtime.model.completion.chat.ChatCompletionContentPart;
+import com.volcengine.ark.runtime.model.completion.chat.ChatCompletionRequest;
+import com.volcengine.ark.runtime.model.completion.chat.ChatMessage;
+import com.volcengine.ark.runtime.model.completion.chat.ChatMessageRole;
+import com.volcengine.ark.runtime.service.ArkService;
+import okhttp3.ConnectionPool;
+import okhttp3.Dispatcher;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AiServiceImpl implements AiService {
     
-    private final List<String> mockSummaries = Arrays.asList(
-        "这是一个关于技术学习的笔记，主要介绍了Spring Boot框架的使用方法。",
-        "这份笔记记录了项目开发过程中的关键要点和注意事项。",
-        "这是一个关于人工智能发展的思考和总结。"
-    );
+    @Value("${ark.api.key:}")
+    private String apiKey;
     
-    private final List<String> mockKeywords = Arrays.asList(
-        "Spring Boot, MyBatis, Java",
-        "项目开发, 注意事项, 技术要点",
-        "人工智能, 机器学习, 深度学习"
-    );
+    @Value("${ark.base.url:https://ark.cn-beijing.volces.com/api/v3}")
+    private String baseUrl;
     
-    private final List<String> mockAnswers = Arrays.asList(
-        "根据笔记内容，这是一个技术相关的笔记，主要涉及Spring Boot框架的使用。",
-        "从内容来看，这是一份项目开发笔记，记录了重要的技术要点。",
-        "这份笔记主要讨论了人工智能的发展趋势和应用前景。"
-    );
+    @Value("${ark.model.endpoint}")
+    private String modelEndpoint;
+    
+    private ConnectionPool connectionPool = new ConnectionPool(5, 1, TimeUnit.SECONDS);
+    private Dispatcher dispatcher = new Dispatcher();
     
     @Override
     public Map<String, Object> analyzeNote(String content) {
-        Map<String, Object> response = new HashMap<>();
-        Random random = new Random();
-        
-        Map<String, Object> analysis = new HashMap<>();
-        analysis.put("summary", mockSummaries.get(random.nextInt(mockSummaries.size())));
-        analysis.put("keywords", mockKeywords.get(random.nextInt(mockKeywords.size())));
-        
-        response.put("success", true);
-        response.put("message", "分析成功");
-        response.put("data", analysis);
-        
-        return response;
+        try {
+            ArkService service = ArkService.builder()
+                    .dispatcher(dispatcher)
+                    .connectionPool(connectionPool)
+                    .baseUrl(baseUrl)
+                    .apiKey(apiKey)
+                    .build();
+            
+            final List<ChatMessage> messages = new ArrayList<>();
+            final ChatMessage userMessage = ChatMessage.builder()
+                    .role(ChatMessageRole.USER)
+                    .content("请分析以下笔记内容，提供一个简短的摘要和关键词：\n\n" + content)
+                    .build();
+            messages.add(userMessage);
+            
+            ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
+                    .model(modelEndpoint)
+                    .messages(messages)
+                    .build();
+            
+            Object responseContentObj = service.createChatCompletion(chatCompletionRequest)
+                    .getChoices().get(0).getMessage().getContent();
+            
+            // 正确解析返回的内容
+            String responseContent = "";
+            if (responseContentObj != null) {
+                // 如果是字符串类型，直接使用
+                if (responseContentObj instanceof String) {
+                    responseContent = (String) responseContentObj;
+                } else {
+                    // 如果是其他对象类型，尝试获取其文本内容
+                    // 根据豆包AI SDK的文档，getContent()可能返回字符串或复杂对象
+                    responseContent = responseContentObj.toString();
+                    
+                    // 如果toString()返回"[object Object]"，则需要进一步解析
+                    if ("[object Object]".equals(responseContent)) {
+                        // 尝试通过反射获取text属性
+                        try {
+                            java.lang.reflect.Method textMethod = responseContentObj.getClass().getMethod("getText");
+                            Object textObj = textMethod.invoke(responseContentObj);
+                            if (textObj != null) {
+                                responseContent = textObj.toString();
+                            }
+                        } catch (Exception e) {
+                            // 如果无法通过反射获取，记录日志并使用原始toString()结果
+                            System.err.println("无法解析AI返回内容: " + e.getMessage());
+                        }
+                    }
+                }
+            }
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("analysis", responseContent);
+            
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", true);
+            responseData.put("message", "分析成功");
+            responseData.put("data", result);
+            
+            return responseData;
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "分析失败: " + e.getMessage());
+            return errorResponse;
+        }
     }
     
     @Override
     public Map<String, Object> summarizeNote(String content) {
-        Map<String, Object> response = new HashMap<>();
-        Random random = new Random();
-        
-        response.put("success", true);
-        response.put("message", "总结成功");
-        response.put("data", mockSummaries.get(random.nextInt(mockSummaries.size())));
-        
-        return response;
+        try {
+            // 添加调试日志
+            System.out.println("API Key: " + apiKey);
+            System.out.println("Base URL: " + baseUrl);
+            System.out.println("Model Endpoint: " + modelEndpoint);
+            
+            ArkService service = ArkService.builder()
+                    .dispatcher(dispatcher)
+                    .connectionPool(connectionPool)
+                    .baseUrl(baseUrl)
+                    .apiKey(apiKey)
+                    .build();
+            
+            final List<ChatMessage> messages = new ArrayList<>();
+            final ChatMessage userMessage = ChatMessage.builder()
+                    .role(ChatMessageRole.USER)
+                    .content("请为以下笔记内容提供一个简洁的总结：\n\n" + content)
+                    .build();
+            messages.add(userMessage);
+            
+            ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
+                    .model(modelEndpoint)
+                    .messages(messages)
+                    .build();
+            
+            Object responseContentObj = service.createChatCompletion(chatCompletionRequest)
+                    .getChoices().get(0).getMessage().getContent();
+            
+            // 正确解析返回的内容
+            String responseContent = "";
+            if (responseContentObj != null) {
+                // 如果是字符串类型，直接使用
+                if (responseContentObj instanceof String) {
+                    responseContent = (String) responseContentObj;
+                } else {
+                    // 如果是其他对象类型，尝试获取其文本内容
+                    // 根据豆包AI SDK的文档，getContent()可能返回字符串或复杂对象
+                    responseContent = responseContentObj.toString();
+                    
+                    // 如果toString()返回"[object Object]"，则需要进一步解析
+                    if ("[object Object]".equals(responseContent)) {
+                        // 尝试通过反射获取text属性
+                        try {
+                            java.lang.reflect.Method textMethod = responseContentObj.getClass().getMethod("getText");
+                            Object textObj = textMethod.invoke(responseContentObj);
+                            if (textObj != null) {
+                                responseContent = textObj.toString();
+                            }
+                        } catch (Exception e) {
+                            // 如果无法通过反射获取，记录日志并使用原始toString()结果
+                            System.err.println("无法解析AI返回内容: " + e.getMessage());
+                        }
+                    }
+                }
+            }
+            
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", true);
+            responseData.put("message", "总结成功");
+            responseData.put("data", responseContent);
+            
+            return responseData;
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "总结失败: " + e.getMessage());
+            return errorResponse;
+        }
     }
     
     @Override
     public Map<String, Object> chatWithNote(String question, String content) {
-        Map<String, Object> response = new HashMap<>();
-        Random random = new Random();
-        
-        response.put("success", true);
-        response.put("message", "问答成功");
-        response.put("data", mockAnswers.get(random.nextInt(mockAnswers.size())));
-        
-        return response;
+        try {
+            ArkService service = ArkService.builder()
+                    .dispatcher(dispatcher)
+                    .connectionPool(connectionPool)
+                    .baseUrl(baseUrl)
+                    .apiKey(apiKey)
+                    .build();
+            
+            final List<ChatMessage> messages = new ArrayList<>();
+            final ChatMessage userMessage = ChatMessage.builder()
+                    .role(ChatMessageRole.USER)
+                    .content("基于以下笔记内容回答问题：" + question + "\n\n笔记内容：\n" + content)
+                    .build();
+            messages.add(userMessage);
+            
+            ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
+                    .model(modelEndpoint)
+                    .messages(messages)
+                    .build();
+            
+            Object responseContentObj = service.createChatCompletion(chatCompletionRequest)
+                    .getChoices().get(0).getMessage().getContent();
+            
+            // 正确解析返回的内容
+            String responseContent = "";
+            if (responseContentObj != null) {
+                // 如果是字符串类型，直接使用
+                if (responseContentObj instanceof String) {
+                    responseContent = (String) responseContentObj;
+                } else {
+                    // 如果是其他对象类型，尝试获取其文本内容
+                    // 根据豆包AI SDK的文档，getContent()可能返回字符串或复杂对象
+                    responseContent = responseContentObj.toString();
+                    
+                    // 如果toString()返回"[object Object]"，则需要进一步解析
+                    if ("[object Object]".equals(responseContent)) {
+                        // 尝试通过反射获取text属性
+                        try {
+                            java.lang.reflect.Method textMethod = responseContentObj.getClass().getMethod("getText");
+                            Object textObj = textMethod.invoke(responseContentObj);
+                            if (textObj != null) {
+                                responseContent = textObj.toString();
+                            }
+                        } catch (Exception e) {
+                            // 如果无法通过反射获取，记录日志并使用原始toString()结果
+                            System.err.println("无法解析AI返回内容: " + e.getMessage());
+                        }
+                    }
+                }
+            }
+            
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", true);
+            responseData.put("message", "问答成功");
+            responseData.put("data", responseContent);
+            
+            return responseData;
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "问答失败: " + e.getMessage());
+            return errorResponse;
+        }
     }
 }

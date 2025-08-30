@@ -15,23 +15,23 @@ export const config = {
     tokenExpiry: 24 * 60 * 60 * 1000, // 24小时
     autoRefresh: true,
     endpoints: {
-      login: '/users/login',
-      register: '/users/register',
-      logout: '/users/logout',
-      profile: '/users/profile',
-      refresh: '/users/refresh-token'
+      login: '/api/users/login',
+      register: '/api/users/register',
+      logout: '/api/users/logout',
+      profile: '/api/users/profile',
+      refresh: '/api/users/refresh-token'
     }
   },
   
   // AI分析配置
   ai: {
-    baseUrl: process.env.VUE_APP_AI_API_URL || '/api', // 使用代理路径
+    baseUrl: process.env.VUE_APP_AI_API_URL || '', // 使用相对路径
     endpoints: {
-      analyze: '/ai/analyze-notes',
-      summarize: '/ai/summarize',
-      keywords: '/ai/extract-keywords',
-      topics: '/ai/classify-topics',
-      chat: '/chat/{userId}' // 新增聊天接口
+      analyze: '/api/ai/analyze',
+      summarize: '/api/ai/summarize',
+      keywords: '/api/ai/extract-keywords',
+      topics: '/api/ai/classify-topics',
+      chat: '/api/ai/chat' // 聊天接口
     },
     timeout: 30000,
     retryCount: 3,
@@ -128,4 +128,4 @@ export const dataStructures = {
       totalTokens: null
     }
   }
-}; 
+};

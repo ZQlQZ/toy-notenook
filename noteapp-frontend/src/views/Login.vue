@@ -46,8 +46,7 @@
           API测试账号
         </p>
         <div style="text-align: center; color: #909399; font-size: 12px;">
-          <div>用户名：liyans 密码：123456</div>
-          <div>用户名：liuj 密码：123456</div>
+          <div>用户名：zql 密码：123456</div>
         </div>
       </div>
     </div>

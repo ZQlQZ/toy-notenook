@@ -10,12 +10,12 @@ spring:
 server:
   port: 8080
 
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html  # Swagger UI 访问路径
-    tags-sorter: alpha      # 按字母顺序排序标签
-    operations-sorter: alpha # 按字母顺序排序接口
-  api-docs:
-    path: /v3/api-docs      # OpenAPI 文档的 JSON 路径
-  default-produces-media-type: application/json # 默认响应类型
-  default-consumes-media-type: application/json # 默认请求类型
+# 火山AI配置
+ark:
+  api:
+    key: 
+  base:
+    url: https://ark.cn-beijing.volces.com/api/v3
+  model:
+    endpoint: doubao-seed-1-6-250615
+
