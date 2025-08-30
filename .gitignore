@@ -12,3 +12,9 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+
+# 忽略 .env 文件
+.env
+
+# 忽略后端具体配置信息
+application.yml

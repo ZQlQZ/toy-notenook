@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import { authService } from '@/services';
+import { authService, authUtils } from '@/services';
 
 export default {
   name: 'NoteList',
@@ -98,7 +98,7 @@ export default {
   },
   async created() {
     // 获取用户信息
-    const userInfo = authService.getUserInfo();
+    const userInfo = authUtils.getUserInfo();
     if (userInfo) {
       this.username = userInfo.username || '';
       this.userId = userInfo.userId || userInfo.id || null;
@@ -113,9 +113,15 @@ export default {
         const response = await fetch(`/api/notes/user/${this.userId}`);
         const data = await response.json();
         
-        if (data.success) {
+        // 检查后端返回的状态码，200表示成功
+        if (data.code === 200) {
           this.notes = data.data || [];
+        } else {
+          console.error('加载笔记失败:', data.msg);
+          alert('加载笔记失败: ' + (data.msg || '未知错误'));
         }
+        
+
       } catch (error) {
         console.error('加载笔记失败:', error);
       }
@@ -123,6 +129,19 @@ export default {
     
     async handleCreateNote() {
       try {
+        // 添加用户ID检查
+        if (!this.userId) {
+          console.error('用户ID不存在，无法创建笔记');
+          alert('用户信息不完整，请重新登录');
+          return;
+        }
+        
+        // 添加输入验证
+        if (!this.newNote.title || !this.newNote.content) {
+          alert('请填写笔记标题和内容');
+          return;
+        }
+        
         const noteData = {
           userId: this.userId,
           title: this.newNote.title,
@@ -139,13 +158,21 @@ export default {
         
         const result = await response.json();
         
-        if (result.success) {
+        // 检查后端返回的状态码，200表示成功
+        if (result.code === 200) {
           this.showCreateForm = false;
           this.newNote = { title: '', content: '' };
           await this.loadNotes();
+          // 添加成功提示
+          alert('笔记创建成功');
+        } else {
+          // 处理后端返回的错误
+          console.error('创建笔记失败:', result.msg);
+          alert('创建笔记失败: ' + (result.msg || '未知错误'));
         }
       } catch (error) {
         console.error('创建笔记失败:', error);
+        alert('创建笔记失败: ' + error.message);
       }
     },
     
@@ -166,12 +193,18 @@ export default {
         
         const result = await response.json();
         
-        if (result.success) {
+        // 检查后端返回的状态码，200表示成功
+        if (result.code === 200) {
           this.showEditForm = false;
           await this.loadNotes();
+          alert('笔记更新成功');
+        } else {
+          console.error('更新笔记失败:', result.msg);
+          alert('更新笔记失败: ' + (result.msg || '未知错误'));
         }
       } catch (error) {
         console.error('更新笔记失败:', error);
+        alert('更新笔记失败: ' + error.message);
       }
     },
     
@@ -185,17 +218,33 @@ export default {
         
         const result = await response.json();
         
-        if (result.success) {
+        // 检查后端返回的状态码，200表示成功
+        if (result.code === 200) {
           await this.loadNotes();
+          alert('笔记删除成功');
+        } else {
+          console.error('删除笔记失败:', result.msg);
+          alert('删除笔记失败: ' + (result.msg || '未知错误'));
         }
       } catch (error) {
         console.error('删除笔记失败:', error);
+        alert('删除笔记失败: ' + error.message);
       }
     },
     
-    handleLogout() {
-      authService.clearAuthData();
-      this.$router.push('/');
+    async handleLogout() {
+      try {
+        // 调用认证服务的登出方法
+        await authService.logout();
+        console.log('用户已登出');
+        // 重定向到登录页面
+        this.$router.push('/');
+      } catch (error) {
+        console.error('登出失败:', error);
+        // 即使登出失败，也清除本地数据并重定向到登录页面
+        authService.clearAuthData();
+        this.$router.push('/');
+      }
     },
     
     formatTime(time) {

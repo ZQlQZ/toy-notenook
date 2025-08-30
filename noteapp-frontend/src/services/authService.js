@@ -90,10 +90,10 @@ class AuthService {
   // 用户登出
   async logout() {
     try {
-      // 调用登出接口
-      await this.request(authConfig.api.endpoints.logout, {
-        method: 'POST'
-      });
+      // 调用登出接口（如果后端提供了登出接口）
+      // await this.request(config.auth.endpoints.logout, {
+      //   method: 'POST'
+      // });
     } catch (error) {
       console.error('登出请求失败:', error);
     } finally {
@@ -171,4 +171,4 @@ class AuthService {
 // 创建单例实例
 const authService = new AuthService();
 
-export default authService; 
+export default authService;

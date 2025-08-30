@@ -35,7 +35,8 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/')
   } else if (to.path === '/' && isAuthenticated) {
-    next('/home')
+    // 已登录用户访问根路径时重定向到笔记列表页面
+    next('/notes')
   } else {
     next()
   }
